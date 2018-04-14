@@ -110,6 +110,21 @@ func (m *Maze) findWalledIn() (x, y int, ok bool) {
 	return 0, 0, false
 }
 
+// Find "explored" room that still has a "walled in" neighbour.
+func (m *Maze) findWalledInNeighbour() (x, y int, ok bool) {
+	for x := 0; x < m.w; x++ {
+		for y := 0; y < m.h; y++ {
+			if !m.walledIn(x, y) {
+				dirs := m.dirsUnexplored(x, y)
+				if len(dirs) > 0 {
+					return x, y, true
+				}
+			}
+		}
+	}
+	return 0, 0, false
+}
+
 // Return list of "legal" directions from room (x,y). Legal here means those
 // that do not leave the bounds of the maze.
 func (m *Maze) dirsLegal(x, y int) []int {
@@ -158,12 +173,12 @@ func (m *Maze) dirsUnexplored(x, y int) []int {
 // room, start at an explored room that has an unexplored one adjacent.
 func (m *Maze) extrudeWanderers() {
 	// TODO: optimize this, it's very inefficient currently.
-	for {
-		x, y, ok := m.findWalledIn()
-		if !ok {
-			return // We're done.
-		}
 
+	// Establish a starting point.
+	x, y := 0, 0 // TODO: start in random room?
+	var ok bool
+
+	for {
 		// Walk around until get "stuck".
 		for {
 			// Which directions can we go in? Cannot leave bounds of
@@ -198,6 +213,14 @@ func (m *Maze) extrudeWanderers() {
 				x -= 1
 			}
 		}
+		// Find a room to re-start the walker in.
+		x, y, ok = m.findWalledInNeighbour()
+		if !ok {
+			// We are done.
+			// This should mean that there are no unexplored rooms.
+			return
+		}
+
 	}
 }
 

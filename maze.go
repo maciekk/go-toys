@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -13,6 +14,12 @@ const (
 	SOUTH
 	WEST
 )
+
+// How many (horizontally adjacent) glyphs to use to represent a single room in
+// a printout. This is used to compensate for the fact that most fonts in
+// terminals are substantially taller than they are wide, whereas we aim for a
+// square room display.
+const roomVisualWidth = 3
 
 type Room struct {
 	wall map[int]bool
@@ -254,11 +261,20 @@ func (m *Maze) extrudeRandCellConnect() {
 	}
 }
 
+// Return string representing a horizontal "stripe" of maze printout,
+// representing the contents of 1 room and the subsequent wall (which may be
+// missing). This is really just an (overkill?) convenience function for hiding
+// the fact room printout may consume multiple characters.
+func span(inside, wall string) string {
+	return strings.Repeat(inside, roomVisualWidth) + wall
+}
+
 // Print the maze to tty.
 func (m *Maze) Print() {
+	// Draw the top wall of the maze.
 	line := "+"
 	for x := 0; x < m.w; x++ {
-		line += "---+"
+		line += span("-", "+")
 	}
 	fmt.Println(line)
 
@@ -269,15 +285,15 @@ func (m *Maze) Print() {
 		for x := 0; x < m.w; x++ {
 			switch m.hasWall(x, y, EAST) {
 			case true:
-				line1 += "   |"
+				line1 += span(" ", "|")
 			default:
-				line1 += "    "
+				line1 += span(" ", " ")
 			}
 			switch m.hasWall(x, y, SOUTH) {
 			case true:
-				line2 += "---+"
+				line2 += span("-", "+")
 			default:
-				line2 += "   +"
+				line2 += span(" ", "+")
 			}
 		}
 		fmt.Println(line1)

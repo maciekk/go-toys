@@ -95,7 +95,7 @@ func (m *Maze) Build() {
 	// Now extrude paths; we have a number of methods for this, as
 	// experimenting still for the most pleasing variant.
 	//m.extrudeRandCellConnect()
-	m.extrudeWanderers()
+	m.extrudeWalker()
 }
 
 // Find a "walled in" room anywhere in the maze.
@@ -163,15 +163,12 @@ func (m *Maze) dirsUnexplored(x, y int) []int {
 	return dirs
 }
 
-// Extrusion method: uses "walkers" that do a random walk until they get
-// stuck.
+// Extrusion method: uses random walks, running each one until it gets stuck.
 //
-// Weakness: produces "components", pockets of connected rooms that are
-// nonetheless unreachable from other parts of the maze.
-//
-// TODO: probably easy fix: rather than restarting walker at a "walled in"
-// room, start at an explored room that has an unexplored one adjacent.
-func (m *Maze) extrudeWanderers() {
+// NOTE: this produces "traditional" looking result, with a single, unique
+// path between any pair of rooms. This is great for traditional maze solving
+// puzzles, but suboptimal for say cat-and-mouse environment (future plans).
+func (m *Maze) extrudeWalker() {
 	// TODO: optimize this, it's very inefficient currently.
 
 	// Establish a starting point.
@@ -292,7 +289,7 @@ func main() {
 	// Seed random number generator.
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	m := NewMaze(10, 10)
+	m := NewMaze(20, 20)
 	m.Build()
 	m.Print()
 }

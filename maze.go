@@ -36,11 +36,15 @@ func NewMaze(w, h int) Maze {
 	return m
 }
 
-// Abstract away room access as still exploring best representation.
+// NOTE: In the following methods we abstract away room access as still
+// exploring best representation.
+
+// Check whether room (x,y) has a wall in the given direction.
 func (m *Maze) hasWall(x, y, dir int) bool {
 	return m.rooms[y][x].wall[dir]
 }
 
+// Checks whether the room at (x,y) has all 4 walls.
 func (m *Maze) walledIn(x, y int) bool {
 	return m.hasWall(x, y, NORTH) &&
 		m.hasWall(x, y, EAST) &&
@@ -48,6 +52,8 @@ func (m *Maze) walledIn(x, y int) bool {
 		m.hasWall(x, y, WEST)
 }
 
+// Modify a wall in the maze, as given by the (x, y, dir) parameters. 'State'
+// controls whether we put in a wall or remove it.
 func (m *Maze) setWall(x, y, dir int, state bool) {
 	m.rooms[y][x].wall[dir] = state
 
@@ -73,6 +79,7 @@ func (m *Maze) setWall(x, y, dir int, state bool) {
 	}
 }
 
+// Construct a complete maze.
 func (m *Maze) Build() {
 	// First, put all walls in.
 	for y := 0; y < m.h; y++ {
@@ -91,6 +98,7 @@ func (m *Maze) Build() {
 	m.extrudeWanderers()
 }
 
+// Find a "walled in" room anywhere in the maze.
 func (m *Maze) findWalledIn() (x, y int, ok bool) {
 	for x := 0; x < m.w; x++ {
 		for y := 0; y < m.h; y++ {
@@ -102,6 +110,8 @@ func (m *Maze) findWalledIn() (x, y int, ok bool) {
 	return 0, 0, false
 }
 
+// Return list of "legal" directions from room (x,y). Legal here means those
+// that do not leave the bounds of the maze.
 func (m *Maze) dirsLegal(x, y int) []int {
 	dirs := make([]int, 0)
 	if x > 0 {
@@ -119,6 +129,8 @@ func (m *Maze) dirsLegal(x, y int) []int {
 	return dirs
 }
 
+// Return list of directions from (x,y) that reach rooms which are still
+// "walled in".
 func (m *Maze) dirsUnexplored(x, y int) []int {
 	dirs := make([]int, 0)
 	if x > 0 && m.walledIn(x-1, y) {
@@ -136,8 +148,14 @@ func (m *Maze) dirsUnexplored(x, y int) []int {
 	return dirs
 }
 
+// Extrusion method: uses "walkers" that do a random walk until they get
+// stuck.
+//
 // Weakness: produces "components", pockets of connected rooms that are
 // nonetheless unreachable from other parts of the maze.
+//
+// TODO: probably easy fix: rather than restarting walker at a "walled in"
+// room, start at an explored room that has an unexplored one adjacent.
 func (m *Maze) extrudeWanderers() {
 	// TODO: optimize this, it's very inefficient currently.
 	for {
@@ -183,6 +201,10 @@ func (m *Maze) extrudeWanderers() {
 	}
 }
 
+// Extrusion method: iterate over all rooms in random order, and for each
+// connect it to a random neighbour.
+//
+// Weakness: not very pleasing result, produces some "empty spaces".
 func (m *Maze) extrudeRandCellConnect() {
 	for _, cell := range rand.Perm(m.w * m.h) {
 		// Unpack cell# to coordinates. Cell# starts at 0 at origin, then
@@ -212,6 +234,7 @@ func (m *Maze) extrudeRandCellConnect() {
 	}
 }
 
+// Print the maze to tty.
 func (m *Maze) Print() {
 	line := "+"
 	for x := 0; x < m.w; x++ {
